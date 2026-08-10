@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="루틴트래커">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f6f7f2">
+<title>루틴 · 트래커</title>
+<style>
+  :root{
+    --bg: #f6f7f2;
+    --panel: #ffffff;
+    --panel-line: #e3e7dc;
+    --ink: #1e2a20;
+    --ink-dim: #6d7a6b;
+    --accent: #2f9668;
+    --accent-soft: #2f966820;
+    --tag-hip: #c46a1f;
+    --tag-spine: #2f6fa8;
+    --tag-leg: #9a3fbf;
+    --tag-full: #3f9142;
+    --tag-core: #9c7f1f;
+    --tag-cardio: #1f8f83;
+  }
+  *{box-sizing:border-box;}
+  html, body{ background-color:#f6f7f2 !important; }
+  #bg-layer{
+    position:fixed; inset:0; z-index:-1;
+    background:
+      radial-gradient(circle at 15% 8%, #2f966814 0%, transparent 45%),
+      #f6f7f2;
+  }
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--ink);
+    font-family: "Pretendard","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    padding: 24px 16px 64px;
+  }
+  .wrap{max-width:720px; margin:0 auto;}
+  header{margin-bottom:20px;}
+  .eyebrow{
+    font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent); font-weight:600; margin-bottom:8px;
+  }
+  h1{font-size:24px; margin:0 0 6px; letter-spacing:-0.01em; color:#1e2a20;}
+  .sub{color:var(--ink-dim); font-size:13.5px; line-height:1.5;}
+
+  /* Tabs */
+  .tabs{
+    display:flex; gap:6px; margin:18px 0 20px;
+    background:var(--panel); border:1px solid var(--panel-line);
+    border-radius:12px; padding:4px;
+    box-shadow: 0 1px 3px #1e2a2008;
+  }
+  .tab-btn{
+    flex:1; text-align:center; padding:10px 8px;
+    border:none; background:transparent; color:var(--ink-dim);
+    font-size:14px; font-weight:600; border-radius:9px;
+    cursor:pointer; transition: background .15s ease, color .15s ease;
+    font-family:inherit;
+  }
+  .tab-btn.active{ background:var(--accent-soft); color:var(--accent); }
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .day{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:14px;
+    padding:18px 18px 8px;
+    margin-bottom:14px;
+    box-shadow: 0 1px 4px #1e2a2008;
+  }
+  .day-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:10px; flex-wrap:wrap; gap:6px;
+  }
+  .day-name{font-size:16px; font-weight:700;}
+  .day-focus{font-size:12.5px; color:var(--ink-dim);}
+
+  a.item, div.item{
+    display:flex; align-items:center; gap:10px;
+    text-decoration:none; color:var(--ink);
+    padding:10px 10px;
+    margin:0 -10px 8px;
+    border-radius:9px;
+    transition: background .15s ease, transform .15s ease;
+  }
+  a.item:hover{ background:#2f966812; transform: translateX(2px); }
+  a.item:active{ background:#2f96681e; }
+
+  .play{
+    flex:0 0 auto;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px;
+  }
+  .item-text{flex:1; min-width:0;}
+  .item-title{font-size:14.5px; font-weight:500; line-height:1.35;}
+  .item-channel{font-size:12px; color:var(--ink-dim); margin-top:1px;}
+
+  .tag{
+    flex:0 0 auto;
+    font-size:10.5px; font-weight:600;
+    padding:3px 8px; border-radius:100px;
+    white-space:nowrap;
+  }
+  .tag.hip{ color:var(--tag-hip); background:#c46a1f1c;}
+  .tag.spine{ color:var(--tag-spine); background:#2f6fa81c;}
+  .tag.leg{ color:var(--tag-leg); background:#9a3fbf1c;}
+  .tag.full{ color:var(--tag-full); background:#3f91421c;}
+  .tag.core{ color:var(--tag-core); background:#9c7f1f1c;}
+  .tag.cardio{ color:var(--tag-cardio); background:#1f8f831c;}
+
+  footer{
+    margin-top:24px; font-size:12px; color:var(--ink-dim);
+    line-height:1.6; padding-top:16px; border-top:1px solid var(--panel-line);
+  }
+
+  /* Tracker */
+  .month-nav{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .month-nav button{
+    background:var(--panel); border:1px solid var(--panel-line);
+    color:var(--ink); width:34px; height:34px; border-radius:9px;
+    font-size:16px; cursor:pointer;
+  }
+  .month-label{font-size:16px; font-weight:700; color:#1e2a20;}
+
+  .cal{
+    background:var(--panel); border:1px solid var(--panel-line);
+    border-radius:14px; padding:14px; margin-bottom:18px;
+    box-shadow: 0 1px 4px #1e2a2008;
+  }
+  .cal-grid{
+    display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  }
+  .cal-dow{
+    text-align:center; font-size:11px; color:var(--ink-dim);
+    padding-bottom:4px; font-weight:600;
+  }
+  .cal-cell{
+    aspect-ratio:1; border-radius:9px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:12px; cursor:pointer;
+    border:1px solid transparent;
+    background:#1e2a2006;
+    color:var(--ink-dim);
+    position:relative;
+  }
+  .cal-cell.empty{ visibility:hidden; cursor:default; }
+  .cal-cell .dnum{font-weight:600; font-size:12.5px; color:var(--ink);}
+  .cal-cell .frac{font-size:9px; margin-top:2px;}
+  .cal-cell.today{ border-color:var(--accent); }
+  .cal-cell.selected{ background:var(--accent-soft); }
+  .cal-cell.done-full{ background:#2f966840; }
+  .cal-cell.done-partial{ background:#2f6fa830; }
+  .cal-cell.done-none-tried{ background:#1e2a200c; }
+
+  .legend{
+    display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--ink-dim);
+    margin-top:10px;
+  }
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .dot{width:9px; height:9px; border-radius:3px; display:inline-block;}
+
+  .checklist-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .checklist-date{font-size:15px; font-weight:700;}
+  .checklist-count{font-size:12.5px; color:var(--accent); font-weight:600;}
+
+  .check-row{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 10px; margin:0 -10px;
+    border-radius:9px;
+  }
+  .check-row:hover{ background:#2f966810; }
+  .checkbox{
+    flex:0 0 auto;
+    width:22px; height:22px; border-radius:7px;
+    border:1.5px solid var(--panel-line);
+    background:#1e2a2005;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:13px; color:transparent;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .checkbox.checked{
+    background:var(--accent); border-color:var(--accent); color:#ffffff;
+  }
+  .check-text{flex:1; min-width:0; cursor:pointer;}
+  .check-title{font-size:14px; font-weight:500;}
+  .check-title.done{ color:var(--ink-dim); text-decoration:line-through; }
+  .check-channel{font-size:11.5px; color:var(--ink-dim);}
+  .check-link{
+    flex:0 0 auto; font-size:11px; color:var(--accent);
+    text-decoration:none; padding:4px 8px; border:1px solid var(--accent-soft);
+    border-radius:100px;
+  }
+
+  .loading{ font-size:13px; color:var(--ink-dim); padding:20px 0; text-align:center; }
+</style>
+</head>
+<body>
+<div id="bg-layer"></div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Weekly Routine + Tracker</div>
+    <h1>스트레칭 · 홈트 루틴</h1>
+    <div class="sub">항목을 눌러 영상을 보고, 트래커 탭에서 완료 체크와 월간 현황을 확인하세요.</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="routine">주간 루틴</button>
+    <button class="tab-btn" data-tab="tracker">트래커</button>
+  </div>
+
+  <!-- ROUTINE VIEW -->
+  <div id="view-routine" class="view active"></div>
+
+  <!-- TRACKER VIEW -->
+  <div id="view-tracker" class="view">
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button id="nextMonth">›</button>
+    </div>
+    <div class="cal">
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#2f966840"></i>전체 완료</span>
+        <span><i class="dot" style="background:#2f6fa830"></i>일부 완료</span>
+        <span><i class="dot" style="background:#1e2a200c"></i>미완료</span>
+      </div>
+    </div>
+    <div class="day" id="checklistPanel">
+      <div class="loading">불러오는 중…</div>
+    </div>
+  </div>
+
+  <footer>
+    체크 데이터는 이 기기(브라우저)에 저장돼요. 링크는 클릭 시 새 탭에서 유튜브 영상으로 연결됩니다.
+  </footer>
+</div>
+
+<script>
+/* ---------- Data ---------- */
+// day groups: daily(매일) + one of mwf / tt / sat / sun depending on day-of-week
+const GROUPS = {
+  daily: [
+    { id:'d1', title:'아침명상', channel:'', link:'https://youtu.be/PIoK5ZdYk6E', tag:'spine', tagLabel:'명상' },
+    { id:'d2', title:'장요근 스트레칭', channel:'빵느', link:'https://youtu.be/RGfinfaJojU', tag:'hip', tagLabel:'고관절' },
+  ],
+  mwf: [
+    { id:'c-mwf', title:'좌식사이클', channel:'15~20분 · 가볍게', tag:'cardio', tagLabel:'유산소' },
+    { id:'e1', title:'한발스쿼트', channel:'이촌동요가', link:'https://youtu.be/IPLyzmznRcc', tag:'leg', tagLabel:'하체' },
+    { id:'e2', title:'복압운동', channel:'이촌동요가', link:'https://youtu.be/kaz4DAHMsrE', tag:'core', tagLabel:'코어' },
+    { id:'e3', title:'장요근 운동', channel:'이촌동요가', link:'https://youtu.be/7k9DqkBMv_Y', tag:'hip', tagLabel:'고관절' },
+    { id:'e4', title:'골반교정', channel:'미서원', link:'https://youtu.be/nQlbDogfCpE', tag:'spine', tagLabel:'골반' },
+  ],
+  tt: [
+    { id:'c-tt', title:'좌식사이클', channel:'30분 · 중강도', tag:'cardio', tagLabel:'유산소' },
+    { id:'t1', title:'부장가 호흡', channel:'이촌동요가', link:'https://youtu.be/y8coqTBCZ90', tag:'spine', tagLabel:'호흡' },
+    { id:'t2', title:'어깨 운동', channel:'이촌동요가', link:'https://youtu.be/ogwV6D19ays', tag:'core', tagLabel:'상체' },
+    { id:'t3', title:'고관절 스트레칭', channel:'모스틱 자세연구소', link:'https://youtu.be/CTa3kRaJfZs', tag:'hip', tagLabel:'고관절' },
+    { id:'t4', title:'하체스트레칭', channel:'강하나', link:'https://youtu.be/LZWORB39zQk', tag:'leg', tagLabel:'하체' },
+  ],
+  sat: [
+    { id:'s1', title:'전신스트레칭', channel:'한혜진', link:'https://youtu.be/2_Pg-XA5enY', tag:'full', tagLabel:'전신' },
+    { id:'c-sat', title:'좌식사이클', channel:'20분 · 저강도', tag:'cardio', tagLabel:'유산소' },
+    { id:'s2', title:'부장가 호흡', channel:'이촌동요가', link:'https://youtu.be/y8coqTBCZ90', tag:'spine', tagLabel:'호흡' },
+    { id:'s3', title:'어깨 운동', channel:'이촌동요가', link:'https://youtu.be/ogwV6D19ays', tag:'core', tagLabel:'상체' },
+    { id:'s4', title:'틀어진 골반 교정', channel:'모스틱', link:'https://youtu.be/J0Sg9bV_VrY', tag:'spine', tagLabel:'골반' },
+    { id:'s5', title:'붓기 쫙 빠지는 스트레칭', channel:'한혜진', link:'https://youtu.be/XVBSOujrJ6A', tag:'full', tagLabel:'전신' },
+  ],
+  sun: [
+    { id:'u1', title:'아침스트레칭', channel:'운동하는 데이브', link:'https://youtu.be/sEo4TCdnS6A', tag:'full', tagLabel:'전신' },
+    { id:'c-sun', title:'좌식사이클', channel:'20분 · 저강도', tag:'cardio', tagLabel:'유산소' },
+    { id:'u2', title:'레전드스트레칭', channel:'운동하는 데이브', link:'https://youtu.be/0HCjBpeLKRU', tag:'full', tagLabel:'전신' },
+  ],
+};
+
+// day-of-week (0=Sun..6=Sat) -> section list for routine tab display & group key for tracker
+const DAY_SECTIONS = [
+  { name:'일', group:'sun', focus:'휴식일 · 가볍게' },       // 0
+  { name:'월', group:'mwf', focus:'근력 홈트 + 골반교정' },  // 1
+  { name:'화', group:'tt',  focus:'유산소 전후' },           // 2
+  { name:'수', group:'mwf', focus:'근력 홈트 + 골반교정' },  // 3
+  { name:'목', group:'tt',  focus:'유산소 전후' },           // 4
+  { name:'금', group:'mwf', focus:'근력 홈트 + 골반교정' },  // 5
+  { name:'토', group:'sat', focus:'가벼운 전신 · 저녁 세트' },// 6
+];
+
+function itemsForDow(dow){
+  const group = DAY_SECTIONS[dow].group;
+  if(group === 'sat' || group === 'sun') return [...GROUPS[group]];
+  return [...GROUPS.daily, ...GROUPS[group]];
+}
+
+/* ---------- Render: Routine tab (static weekly view) ---------- */
+function renderRoutine(){
+  const el = document.getElementById('view-routine');
+  // 표시 순서대로 그룹 묶기: 월수금(mwf) / 화목(tt) / 토(sat) / 일(sun)
+  const blocks = [
+    { label:'월 · 수 · 금', dowForItems:1, focus:'근력 홈트 + 골반교정' },
+    { label:'화 · 목',     dowForItems:2, focus:'유산소 전후' },
+    { label:'토',          dowForItems:6, focus:'가벼운 전신 · 저녁 세트' },
+    { label:'일',          dowForItems:0, focus:'휴식일 · 가볍게' },
+  ];
+  let html = '';
+  blocks.forEach(b=>{
+    const items = itemsForDow(b.dowForItems);
+    html += `<div class="day">
+      <div class="day-head">
+        <div class="day-name">${b.label}</div>
+        <div class="day-focus">${b.focus}</div>
+      </div>`;
+    items.forEach(it=>{
+      const tag = it.link ? 'a' : 'div';
+      const linkAttrs = it.link ? `href="${it.link}" target="_blank" rel="noopener"` : '';
+      const icon = it.link ? '▶' : '⏱';
+      html += `<${tag} class="item" ${linkAttrs}>
+        <span class="play">${icon}</span>
+        <span class="item-text">
+          <div class="item-title">${it.title}</div>
+          ${it.channel ? `<div class="item-channel">${it.channel}</div>` : ''}
+        </span>
+        <span class="tag ${it.tag}">${it.tagLabel}</span>
+      </${tag}>`;
+    });
+    html += `</div>`;
+  });
+  el.innerHTML = html;
+}
+
+/* ---------- Tracker ---------- */
+let currentMonth = new Date();
+currentMonth.setDate(1);
+let selectedDate = fmtDate(new Date());
+
+function fmtDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayStr(){ return fmtDate(new Date()); }
+
+async function getDayRecord(dateStr){
+  try{
+    const res = await window.storage.get('track:'+dateStr, false);
+    return res && res.value ? JSON.parse(res.value) : {};
+  }catch(e){ return {}; }
+}
+async function saveDayRecord(dateStr, record){
+  try{
+    await window.storage.set('track:'+dateStr, JSON.stringify(record), false);
+  }catch(e){ console.error('save failed', e); }
+}
+
+async function renderCalendar(){
+  const label = document.getElementById('monthLabel');
+  label.textContent = `${currentMonth.getFullYear()}년 ${currentMonth.getMonth()+1}월`;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['일','월','화','수','목','금','토'].forEach(d=>{
+    const div = document.createElement('div');
+    div.className='cal-dow'; div.textContent=d;
+    grid.appendChild(div);
+  });
+
+  const year = currentMonth.getFullYear(), month = currentMonth.getMonth();
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  // fetch all records for this month
+  const records = {};
+  const fetches = [];
+  for(let d=1; d<=daysInMonth; d++){
+    const dt = new Date(year, month, d);
+    const key = fmtDate(dt);
+    fetches.push(getDayRecord(key).then(rec=>{ records[key]=rec; }));
+  }
+  await Promise.all(fetches);
+
+  for(let i=0;i<firstDow;i++){
+    const cell = document.createElement('div');
+    cell.className='cal-cell empty';
+    grid.appendChild(cell);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dt = new Date(year, month, d);
+    const key = fmtDate(dt);
+    const dow = dt.getDay();
+    const total = itemsForDow(dow).length;
+    const rec = records[key] || {};
+    const doneCount = Object.values(rec).filter(Boolean).length;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    if(key === todayStr()) cell.classList.add('today');
+    if(key === selectedDate) cell.classList.add('selected');
+    if(doneCount>0 && doneCount>=total) cell.classList.add('done-full');
+    else if(doneCount>0) cell.classList.add('done-partial');
+
+    cell.innerHTML = `<div class="dnum">${d}</div><div class="frac">${doneCount}/${total}</div>`;
+    cell.addEventListener('click', ()=>{
+      selectedDate = key;
+      renderCalendar();
+      renderChecklist();
+    });
+    grid.appendChild(cell);
+  }
+}
+
+async function renderChecklist(){
+  const panel = document.getElementById('checklistPanel');
+  panel.innerHTML = `<div class="loading">불러오는 중…</div>`;
+  const dt = new Date(selectedDate+'T00:00:00');
+  const dow = dt.getDay();
+  const items = itemsForDow(dow);
+  const rec = await getDayRecord(selectedDate);
+
+  const dateLabel = `${dt.getMonth()+1}월 ${dt.getDate()}일 (${DAY_SECTIONS[dow].name})`;
+  const doneCount = items.filter(it=>rec[it.id]).length;
+
+  let html = `<div class="checklist-head">
+    <div class="checklist-date">${dateLabel}</div>
+    <div class="checklist-count">${doneCount}/${items.length} 완료</div>
+  </div>`;
+
+  items.forEach(it=>{
+    const checked = !!rec[it.id];
+    html += `<div class="check-row">
+      <div class="checkbox ${checked?'checked':''}" data-id="${it.id}">${checked?'✓':''}</div>
+      <div class="check-text" data-id="${it.id}">
+        <div class="check-title ${checked?'done':''}">${it.title}</div>
+        ${it.channel ? `<div class="check-channel">${it.channel}</div>` : ''}
+      </div>
+      ${it.link ? `<a class="check-link" href="${it.link}" target="_blank" rel="noopener">보기</a>` : ''}
+    </div>`;
+  });
+
+  panel.innerHTML = html;
+
+  panel.querySelectorAll('[data-id]').forEach(el=>{
+    el.addEventListener('click', async (e)=>{
+      if(e.target.classList.contains('check-link')) return;
+      const id = el.getAttribute('data-id');
+      const currentRec = await getDayRecord(selectedDate);
+      currentRec[id] = !currentRec[id];
+      await saveDayRecord(selectedDate, currentRec);
+      renderChecklist();
+      renderCalendar();
+    });
+  });
+}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('prevMonth').addEventListener('click', ()=>{
+  currentMonth.setMonth(currentMonth.getMonth()-1);
+  renderCalendar();
+});
+document.getElementById('nextMonth').addEventListener('click', ()=>{
+  currentMonth.setMonth(currentMonth.getMonth()+1);
+  renderCalendar();
+});
+
+/* ---------- Init ---------- */
+renderRoutine();
+renderCalendar();
+renderChecklist();
+</script>
+</body>
+</html>
