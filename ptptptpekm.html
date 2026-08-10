@@ -9,8 +9,16 @@
 <meta name="apple-mobile-web-app-title" content="루틴트래커">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f6f7f2">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>루틴 · 트래커</title>
 <style>
+  @font-face{
+    font-family: 'ZenSerif';
+    src: url('fonts/ZenSerif.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
   :root{
     --bg: #f6f7f2;
     --panel: #ffffff;
@@ -38,7 +46,7 @@
     margin:0;
     min-height:100vh;
     color:var(--ink);
-    font-family: "Pretendard","Apple SD Gothic Neo","Segoe UI",sans-serif;
+    font-family: "ZenSerif","Pretendard","Apple SD Gothic Neo","Segoe UI",sans-serif;
     padding: 24px 16px 64px;
   }
   .wrap{max-width:720px; margin:0 auto;}
@@ -262,15 +270,19 @@ const GROUPS = {
     { id:'d1', title:'아침명상', channel:'', link:'https://youtu.be/PIoK5ZdYk6E', tag:'spine', tagLabel:'명상' },
     { id:'d2', title:'장요근 스트레칭', channel:'빵느', link:'https://youtu.be/RGfinfaJojU', tag:'hip', tagLabel:'고관절' },
   ],
+  cardio: {
+    mwf: { id:'c-mwf', title:'좌식사이클', channel:'15~20분 · 가볍게 (공복 유산소)', tag:'cardio', tagLabel:'유산소' },
+    tt:  { id:'c-tt',  title:'좌식사이클', channel:'30분 · 중강도 (공복 유산소)', tag:'cardio', tagLabel:'유산소' },
+    sat: { id:'c-sat', title:'좌식사이클', channel:'20분 · 저강도 (공복 유산소)', tag:'cardio', tagLabel:'유산소' },
+    sun: { id:'c-sun', title:'좌식사이클', channel:'20분 · 저강도 (공복 유산소)', tag:'cardio', tagLabel:'유산소' },
+  },
   mwf: [
-    { id:'c-mwf', title:'좌식사이클', channel:'15~20분 · 가볍게', tag:'cardio', tagLabel:'유산소' },
     { id:'e1', title:'한발스쿼트', channel:'이촌동요가', link:'https://youtu.be/IPLyzmznRcc', tag:'leg', tagLabel:'하체' },
     { id:'e2', title:'복압운동', channel:'이촌동요가', link:'https://youtu.be/kaz4DAHMsrE', tag:'core', tagLabel:'코어' },
     { id:'e3', title:'장요근 운동', channel:'이촌동요가', link:'https://youtu.be/7k9DqkBMv_Y', tag:'hip', tagLabel:'고관절' },
     { id:'e4', title:'골반교정', channel:'미서원', link:'https://youtu.be/nQlbDogfCpE', tag:'spine', tagLabel:'골반' },
   ],
   tt: [
-    { id:'c-tt', title:'좌식사이클', channel:'30분 · 중강도', tag:'cardio', tagLabel:'유산소' },
     { id:'t1', title:'부장가 호흡', channel:'이촌동요가', link:'https://youtu.be/y8coqTBCZ90', tag:'spine', tagLabel:'호흡' },
     { id:'t2', title:'어깨 운동', channel:'이촌동요가', link:'https://youtu.be/ogwV6D19ays', tag:'core', tagLabel:'상체' },
     { id:'t3', title:'고관절 스트레칭', channel:'모스틱 자세연구소', link:'https://youtu.be/CTa3kRaJfZs', tag:'hip', tagLabel:'고관절' },
@@ -278,7 +290,6 @@ const GROUPS = {
   ],
   sat: [
     { id:'s1', title:'전신스트레칭', channel:'한혜진', link:'https://youtu.be/2_Pg-XA5enY', tag:'full', tagLabel:'전신' },
-    { id:'c-sat', title:'좌식사이클', channel:'20분 · 저강도', tag:'cardio', tagLabel:'유산소' },
     { id:'s2', title:'부장가 호흡', channel:'이촌동요가', link:'https://youtu.be/y8coqTBCZ90', tag:'spine', tagLabel:'호흡' },
     { id:'s3', title:'어깨 운동', channel:'이촌동요가', link:'https://youtu.be/ogwV6D19ays', tag:'core', tagLabel:'상체' },
     { id:'s4', title:'틀어진 골반 교정', channel:'모스틱', link:'https://youtu.be/J0Sg9bV_VrY', tag:'spine', tagLabel:'골반' },
@@ -286,10 +297,11 @@ const GROUPS = {
   ],
   sun: [
     { id:'u1', title:'아침스트레칭', channel:'운동하는 데이브', link:'https://youtu.be/sEo4TCdnS6A', tag:'full', tagLabel:'전신' },
-    { id:'c-sun', title:'좌식사이클', channel:'20분 · 저강도', tag:'cardio', tagLabel:'유산소' },
     { id:'u2', title:'레전드스트레칭', channel:'운동하는 데이브', link:'https://youtu.be/0HCjBpeLKRU', tag:'full', tagLabel:'전신' },
   ],
 };
+
+const END_STRETCH = { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' };
 
 // day-of-week (0=Sun..6=Sat) -> section list for routine tab display & group key for tracker
 const DAY_SECTIONS = [
@@ -304,8 +316,19 @@ const DAY_SECTIONS = [
 
 function itemsForDow(dow){
   const group = DAY_SECTIONS[dow].group;
-  if(group === 'sat' || group === 'sun') return [...GROUPS[group]];
-  return [...GROUPS.daily, ...GROUPS[group]];
+  let items;
+  if(group === 'sat' || group === 'sun'){
+    // 토/일: 기존 아침스트레칭 -> 사이클 -> 저녁루틴
+    const morningStretch = GROUPS[group][0];
+    const rest = GROUPS[group].slice(1);
+    items = [morningStretch, GROUPS.cardio[group], ...rest];
+  } else {
+    // 월수금/화목: 장요근 스트레칭 -> 사이클(공복 유산소) -> 명상 -> 저녁루틴
+    const jangyogeun = GROUPS.daily.find(it=>it.id==='d2');
+    const meditation = GROUPS.daily.find(it=>it.id==='d1');
+    items = [jangyogeun, GROUPS.cardio[group], meditation, ...GROUPS[group]];
+  }
+  return [...items, END_STRETCH];
 }
 
 /* ---------- Render: Routine tab (static weekly view) ---------- */
