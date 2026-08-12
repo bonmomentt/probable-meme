@@ -380,13 +380,13 @@ function todayStr(){ return fmtDate(new Date()); }
 
 async function getDayRecord(dateStr){
   try{
-    const res = await window.storage.get('track:'+dateStr, false);
-    return res && res.value ? JSON.parse(res.value) : {};
+    const raw = localStorage.getItem('track:'+dateStr);
+    return raw ? JSON.parse(raw) : {};
   }catch(e){ return {}; }
 }
 async function saveDayRecord(dateStr, record){
   try{
-    await window.storage.set('track:'+dateStr, JSON.stringify(record), false);
+    localStorage.setItem('track:'+dateStr, JSON.stringify(record));
   }catch(e){ console.error('save failed', e); }
 }
 
