@@ -301,7 +301,20 @@ const GROUPS = {
   ],
 };
 
-const END_STRETCH = { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' };
+const END_STRETCH = {
+  mwf: { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/y61Nx_ZD7j8', tag:'full', tagLabel:'전신' },
+  tt:  { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' },
+  sat: { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' },
+  sun: { id:'end1', title:'마무리 스트레칭', channel:'', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' },
+};
+const WARMUP_STRETCH = { id:'warm1', title:'스트레칭', channel:'사이클 전 웜업', link:'https://youtu.be/gIJqaztXJII', tag:'full', tagLabel:'전신' };
+
+// 매일 꾸준히 할 것 (영상 링크 없이 직접 하는 항목)
+const CONSISTENT = [
+  { id:'k1', title:'한발서기', channel:'양쪽 1분', tag:'core', tagLabel:'밸런스' },
+  { id:'k2', title:'데드버그', channel:'양쪽 5회 x 5세트', tag:'core', tagLabel:'코어' },
+  { id:'k3', title:'마무리스트레칭', channel:'', tag:'full', tagLabel:'전신' },
+];
 
 // day-of-week (0=Sun..6=Sat) -> section list for routine tab display & group key for tracker
 const DAY_SECTIONS = [
@@ -321,39 +334,33 @@ function itemsForDow(dow){
     // 토/일: 기존 아침스트레칭 -> 사이클 -> 저녁루틴
     const morningStretch = GROUPS[group][0];
     const rest = GROUPS[group].slice(1);
-    items = [morningStretch, GROUPS.cardio[group], ...rest];
+    items = [...CONSISTENT, morningStretch, WARMUP_STRETCH, GROUPS.cardio[group], ...rest];
   } else {
-    // 월수금/화목: 장요근 스트레칭 -> 사이클(공복 유산소) -> 명상 -> 저녁루틴
+    // 월수금/화목: 장요근 스트레칭 -> 웜업스트레칭 -> 사이클(공복 유산소) -> 명상 -> 저녁루틴
     const jangyogeun = GROUPS.daily.find(it=>it.id==='d2');
     const meditation = GROUPS.daily.find(it=>it.id==='d1');
-    items = [jangyogeun, GROUPS.cardio[group], meditation, ...GROUPS[group]];
+    items = [...CONSISTENT, jangyogeun, WARMUP_STRETCH, GROUPS.cardio[group], meditation, ...GROUPS[group]];
   }
-  return [...items, END_STRETCH];
+  return [...items, END_STRETCH[group]];
 }
 
 /* ---------- Render: Routine tab (static weekly view) ---------- */
 function renderRoutine(){
   const el = document.getElementById('view-routine');
-  // 표시 순서대로 그룹 묶기: 월수금(mwf) / 화목(tt) / 토(sat) / 일(sun)
   const blocks = [
     { label:'월 · 수 · 금', dowForItems:1, focus:'근력 홈트 + 골반교정' },
     { label:'화 · 목',     dowForItems:2, focus:'유산소 전후' },
     { label:'토',          dowForItems:6, focus:'가벼운 전신 · 저녁 세트' },
     { label:'일',          dowForItems:0, focus:'휴식일 · 가볍게' },
   ];
-  let html = '';
-  blocks.forEach(b=>{
-    const items = itemsForDow(b.dowForItems);
-    html += `<div class="day">
-      <div class="day-head">
-        <div class="day-name">${b.label}</div>
-        <div class="day-focus">${b.focus}</div>
-      </div>`;
+
+  const renderItems = (items)=>{
+    let h = '';
     items.forEach(it=>{
       const tag = it.link ? 'a' : 'div';
       const linkAttrs = it.link ? `href="${it.link}" target="_blank" rel="noopener"` : '';
       const icon = it.link ? '▶' : '⏱';
-      html += `<${tag} class="item" ${linkAttrs}>
+      h += `<${tag} class="item" ${linkAttrs}>
         <span class="play">${icon}</span>
         <span class="item-text">
           <div class="item-title">${it.title}</div>
@@ -362,6 +369,26 @@ function renderRoutine(){
         <span class="tag ${it.tag}">${it.tagLabel}</span>
       </${tag}>`;
     });
+    return h;
+  };
+
+  // 최상단: 꾸준히 할 것 (매일 공통)
+  let html = `<div class="day">
+    <div class="day-head">
+      <div class="day-name">꾸준히 할 것</div>
+      <div class="day-focus">매일 습관</div>
+    </div>`;
+  html += renderItems(CONSISTENT);
+  html += `</div>`;
+
+  blocks.forEach(b=>{
+    const items = itemsForDow(b.dowForItems).filter(it=>!CONSISTENT.some(c=>c.id===it.id));
+    html += `<div class="day">
+      <div class="day-head">
+        <div class="day-name">${b.label}</div>
+        <div class="day-focus">${b.focus}</div>
+      </div>`;
+    html += renderItems(items);
     html += `</div>`;
   });
   el.innerHTML = html;
